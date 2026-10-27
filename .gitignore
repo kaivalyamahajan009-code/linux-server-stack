@@ -1,0 +1,5 @@
+.env
+*.prom
+*.dump
+*.tar.gz
+backups/

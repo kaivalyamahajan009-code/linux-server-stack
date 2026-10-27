@@ -1,0 +1,10 @@
+[Unit]
+Description=Linux server stack - daily backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/linux-server-stack
+ExecStart=/opt/linux-server-stack/scripts/backup.sh
+TimeoutStartSec=600

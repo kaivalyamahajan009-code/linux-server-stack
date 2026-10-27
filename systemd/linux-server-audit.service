@@ -1,0 +1,10 @@
+[Unit]
+Description=Linux server stack - service and port audit
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/linux-server-stack
+ExecStart=/opt/linux-server-stack/scripts/audit.sh
+TimeoutStartSec=120

@@ -1,0 +1,65 @@
+groups:
+  - name: server_alerts
+    rules:
+      - alert: TargetDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus scrape target {{ $labels.instance }} is down"
+          description: "Scrape target {{ $labels.instance }} under job {{ $labels.job }} has been unreachable for more than 2 minutes."
+
+      - alert: HostDiskNearlyFull
+        expr: (100 - ((node_filesystem_avail_bytes{mountpoint=~"/|/host"} * 100) / node_filesystem_size_bytes{mountpoint=~"/|/host"})) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host filesystem disk usage is above 85%"
+          description: "Filesystem on {{ $labels.mountpoint }} is {{ $value | printf \"%.1f\" }}% full."
+
+      - alert: HostMemoryHigh
+        expr: ((node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host memory utilization is sustained above 90%"
+          description: "Host available memory is below 10% of total memory."
+
+      - alert: UnhealthyExpectedService
+        expr: server_audit_service_healthy == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Expected service {{ $labels.target }} is unhealthy"
+          description: "Service audit reported {{ $labels.type }} service {{ $labels.target }} as down or inactive."
+
+      - alert: UnhealthyExpectedPort
+        expr: server_audit_port_healthy == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Expected port {{ $labels.name }} (port {{ $labels.port }}) is unhealthy"
+          description: "Port audit detected that {{ $labels.name }} is either not listening on loopback or failing HTTP check."
+
+      - alert: AuditStaleOrMissing
+        expr: (time() - server_audit_last_success_timestamp_seconds > 900) or (absent(server_audit_last_success_timestamp_seconds) == 1)
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Service and port audit is stale or has never completed"
+          description: "No successful audit has completed within the last 15 minutes."
+
+      - alert: BackupStaleOrMissing
+        expr: (time() - server_backup_last_success_timestamp_seconds > 93600) or (absent(server_backup_last_success_timestamp_seconds) == 1)
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Stack backup is stale or has never completed"
+          description: "No successful backup has been recorded in over 26 hours."

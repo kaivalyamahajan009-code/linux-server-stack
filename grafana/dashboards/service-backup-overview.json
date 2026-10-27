@@ -1,0 +1,174 @@
+{
+  "annotations": { "list": [] },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Audit Age",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtduration_s",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 360 },
+              { "color": "red", "value": 900 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "time() - server_audit_last_success_timestamp_seconds",
+          "legendFormat": "Audit Age",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Audit Execution Success",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [
+            { "options": { "0": { "text": "FAILED", "color": "red" }, "1": { "text": "OK", "color": "green" } }, "type": "value" }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "server_audit_execution_success",
+          "legendFormat": "Execution",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Backup Age",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtduration_s",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 86400 },
+              { "color": "red", "value": 93600 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "time() - server_backup_last_success_timestamp_seconds",
+          "legendFormat": "Backup Age",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Backup Execution Success",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [
+            { "options": { "0": { "text": "FAILED", "color": "red" }, "1": { "text": "OK", "color": "green" } }, "type": "value" }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "server_backup_execution_success",
+          "legendFormat": "Execution",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Currently Unhealthy Services & Ports (Latest Completed Audit)",
+      "type": "table",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 4 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT 'service' AS check_type, target_name AS name, active_state || ' (' || coalesce(substate, '') || ')' AS state, details AS message FROM service_checks WHERE audit_run_id = (SELECT id FROM audit_runs WHERE status = 'completed' ORDER BY started_at DESC LIMIT 1) AND is_healthy = false UNION ALL SELECT 'port' AS check_type, name, address || ':' || port AS state, coalesce(error_message, 'HTTP ' || coalesce(http_status::text, 'unreachable')) AS message FROM port_checks WHERE audit_run_id = (SELECT id FROM audit_runs WHERE status = 'completed' ORDER BY started_at DESC LIMIT 1) AND is_healthy = false;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Recent Audit Runs History (PostgreSQL)",
+      "type": "table",
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 10 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT id, hostname, started_at, ended_at, ROUND(EXTRACT(EPOCH FROM (ended_at - started_at))::numeric, 2) AS duration_seconds, status, summary_error FROM audit_runs ORDER BY started_at DESC LIMIT 10;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Recent Backup Runs History (PostgreSQL)",
+      "type": "table",
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 17 },
+      "datasource": { "type": "postgres", "uid": "postgres" },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT backup_id, hostname, started_at, ROUND(EXTRACT(EPOCH FROM (ended_at - started_at))::numeric, 2) AS duration_seconds, status, total_bytes, verification_result, pruned_at, error_message FROM backup_runs ORDER BY started_at DESC LIMIT 10;",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["audit", "backup", "linux-server-stack"],
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": { "refresh_intervals": ["10s", "30s", "1m", "5m"] },
+  "timezone": "browser",
+  "title": "Service and Backup Overview",
+  "uid": "service-backup-overview"
+}
