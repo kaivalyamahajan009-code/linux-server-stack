@@ -65,6 +65,8 @@ write_metrics() {
     local file="$1"
     local content="$2"
     mkdir -p "${TEXTFILE_DIR}"
+    # node-exporter runs as nobody, so it can only read this folder if it is world-readable
+    chmod 755 "${TEXTFILE_DIR}"
     local tmp="${TEXTFILE_DIR}/.${file}.tmp"
     echo "${content}" > "${tmp}"
     chmod 644 "${tmp}"

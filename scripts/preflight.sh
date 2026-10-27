@@ -38,5 +38,6 @@ done
 
 mkdir -p "${BACKUP_DIR}" "${TEXTFILE_DIR}"
 chmod 700 "${BACKUP_DIR}"
+chmod 755 "${TEXTFILE_DIR}"
 
 log "All checks passed, you can run: docker compose up -d"

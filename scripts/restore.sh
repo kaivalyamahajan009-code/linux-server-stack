@@ -29,11 +29,19 @@ log "Creating containers and empty volumes"
 compose create
 
 for name in grafana prometheus; do
+    # Grafana runs as uid 472, Prometheus as 65534. The volume is root-owned after
+    # extract, and both need to create files there (sqlite journal, tsdb wal).
+    if [[ "${name}" == "grafana" ]]; then
+        owner="472:472"
+    else
+        owner="65534:65534"
+    fi
     log "Restoring ${name} volume"
     docker run --rm \
         -v "${COMPOSE_PROJECT_NAME}_${name}_data:/data" \
         -v "${DIR}:/backup:ro" \
-        "${HELPER_IMAGE}" tar -xzf "/backup/${name}.tar.gz" -C /data
+        "${HELPER_IMAGE}" \
+        sh -c "tar -xzf /backup/${name}.tar.gz -C /data && chown -R ${owner} /data"
 done
 
 log "Restoring PostgreSQL database"

@@ -60,7 +60,7 @@ On Ubuntu 24.04, as root:
 apt-get update && apt-get install -y curl docker.io docker-compose-v2
 systemctl enable --now docker
 
-git clone <repo_url> /opt/linux-server-stack
+git clone https://github.com/kaivalyamahajan009-code/linux-server-stack /opt/linux-server-stack
 cd /opt/linux-server-stack
 
 cp .env.example .env

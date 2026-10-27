@@ -27,10 +27,19 @@ docker run -d --name "${TEST_CONTAINER}" --network none \
 
 # The image first starts a temporary socket-only server to run initdb, so check over TCP
 # to wait for the real server.
+ready=0
 for _ in $(seq 1 30); do
-    docker exec "${TEST_CONTAINER}" pg_isready -h 127.0.0.1 -U postgres -d verify_db >/dev/null 2>&1 && break
+    if docker exec "${TEST_CONTAINER}" pg_isready -h 127.0.0.1 -U postgres -d verify_db >/dev/null 2>&1; then
+        ready=1
+        break
+    fi
     sleep 1
 done
+
+if [[ "${ready}" -ne 1 ]]; then
+    log "ERROR: test database did not start."
+    exit 1
+fi
 
 docker exec -i "${TEST_CONTAINER}" pg_restore -U postgres -d verify_db --exit-on-error --no-owner --no-acl \
     < "${DIR}/postgres.dump"
